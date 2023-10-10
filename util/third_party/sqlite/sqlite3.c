@@ -32985,6 +32985,7 @@ SQLITE_PRIVATE int sqlite3ThreadJoin(SQLiteThread *p, void **ppOut){
   DWORD rc;
   BOOL bRc;
 
+  (void)bRc; // Silabs cosmetic fix: remove compiler warning in case if assert() is defined (void)
   assert( ppOut!=0 );
   if( NEVER(p==0) ) return SQLITE_NOMEM_BKPT;
   if( p->xTask==0 ){
