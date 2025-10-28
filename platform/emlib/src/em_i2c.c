@@ -556,6 +556,9 @@ I2C_TransferReturn_TypeDef I2C_Transfer(I2C_TypeDef *i2c)
       /* an exact cause and how to resolve. It will be up to a wrapper */
       /* to determine how to handle a fault/recovery if possible. */
       transfer->state = i2cStateDone;
+
+      // Vypex Change: Abort on error
+      i2c->CMD = I2C_CMD_ABORT;
       break;
     }
 
@@ -590,6 +593,10 @@ I2C_TransferReturn_TypeDef I2C_Transfer(I2C_TypeDef *i2c)
       case i2cStateAddrWFAckNack:
         if (pending & I2C_IF_NACK) {
           I2C_IntClear(i2c, I2C_IF_NACK);
+
+          // Vypex Change: Disable not needed interrupts while waiting for stop
+          I2C_IntDisable(i2c, (I2C_IEN_NACK | I2C_IEN_ACK | I2C_IEN_RXDATAV));
+
           transfer->result = i2cTransferNack;
           transfer->state  = i2cStateWFStopSent;
           i2c->CMD         = I2C_CMD_STOP;
@@ -622,6 +629,10 @@ I2C_TransferReturn_TypeDef I2C_Transfer(I2C_TypeDef *i2c)
       case i2cStateAddrWF2ndAckNack:
         if (pending & I2C_IF_NACK) {
           I2C_IntClear(i2c, I2C_IF_NACK);
+
+          // Vypex Change: Disable not needed interrupts while waiting for stop
+          I2C_IntDisable(i2c, (I2C_IEN_NACK | I2C_IEN_ACK | I2C_IEN_RXDATAV));
+
           transfer->result = i2cTransferNack;
           transfer->state  = i2cStateWFStopSent;
           i2c->CMD         = I2C_CMD_STOP;
@@ -677,6 +688,10 @@ I2C_TransferReturn_TypeDef I2C_Transfer(I2C_TypeDef *i2c)
       case i2cStateRAddrWFAckNack:
         if (pending & I2C_IF_NACK) {
           I2C_IntClear(i2c, I2C_IF_NACK);
+
+          // Vypex Change: Disable not needed interrupts while waiting for stop
+          I2C_IntDisable(i2c, (I2C_IEN_NACK | I2C_IEN_ACK | I2C_IEN_RXDATAV));
+
           transfer->result = i2cTransferNack;
           transfer->state  = i2cStateWFStopSent;
           i2c->CMD         = I2C_CMD_STOP;
@@ -712,6 +727,9 @@ I2C_TransferReturn_TypeDef I2C_Transfer(I2C_TypeDef *i2c)
 
           /* Only writing from one buffer or finished both buffers. */
           if ((seq->flags & I2C_FLAG_WRITE) || (transfer->bufIndx > 1)) {
+            // Vypex Change: Disable not needed interrupts while waiting for stop
+            I2C_IntDisable(i2c, (I2C_IEN_NACK | I2C_IEN_ACK | I2C_IEN_RXDATAV));
+
             transfer->state = i2cStateWFStopSent;
             i2c->CMD        = I2C_CMD_STOP;
             finished = true;
@@ -734,6 +752,10 @@ I2C_TransferReturn_TypeDef I2C_Transfer(I2C_TypeDef *i2c)
       case i2cStateDataWFAckNack:
         if (pending & I2C_IF_NACK) {
           I2C_IntClear(i2c, I2C_IF_NACK);
+
+          // Vypex Change: Disable not needed interrupts while waiting for stop
+          I2C_IntDisable(i2c, (I2C_IEN_NACK | I2C_IEN_ACK | I2C_IEN_RXDATAV));
+
           transfer->result = i2cTransferNack;
           transfer->state  = i2cStateWFStopSent;
           i2c->CMD         = I2C_CMD_STOP;
@@ -784,6 +806,9 @@ I2C_TransferReturn_TypeDef I2C_Transfer(I2C_TypeDef *i2c)
 
           /* If all requested data is read, the sequence should end. */
           if (transfer->offset >= rxLen) {
+            // Vypex Change: Disable not needed interrupts while waiting for stop
+            I2C_IntDisable(i2c, (I2C_IEN_NACK | I2C_IEN_ACK | I2C_IEN_RXDATAV));
+
             transfer->state = i2cStateWFStopSent;
             i2c->CMD        = I2C_CMD_STOP;
           } else {
