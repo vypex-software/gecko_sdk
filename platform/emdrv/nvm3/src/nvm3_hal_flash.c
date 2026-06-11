@@ -35,10 +35,6 @@
 #include "em_system.h"
 #include "em_msc.h"
 
-// Vypex Change Start: Add access control to writing to the flash to avoid corruption.
-#include "src/hal/hal_storage.h"
-// Vypex Change End
-
 /***************************************************************************//**
  * @addtogroup nvm3
  * @{
@@ -184,17 +180,7 @@ static Ecode_t nvm3_halFlashWriteWords(nvm3_HalPtr_t nvmAdr, void const *src, si
   size_t byteCnt;
 
   byteCnt = wordCnt * sizeof(uint32_t);
-
-  // Vypex Change Start: Add access control to writing to the flash to avoid corruption.
-  halStorageLock();
-  // Vypex Change End
-
   mscSta = MSC_WriteWord(pDst, pSrc, byteCnt);
-
-  // Vypex Change Start: Add access control to writing to the flash to avoid corruption.
-  halStorageUnlock();
-  // Vypex Change End
-
   halSta = convertMscStatusToNvm3Status(mscSta);
 
 #if CHECK_DATA
@@ -213,16 +199,7 @@ static Ecode_t nvm3_halFlashPageErase(nvm3_HalPtr_t nvmAdr)
   MSC_Status_TypeDef mscSta;
   Ecode_t halSta;
 
-  // Vypex Change Start: Add access control to writing to the flash to avoid corruption.
-  halStorageLock();
-  // Vypex Change End
-
   mscSta = MSC_ErasePage((uint32_t *)nvmAdr);
-
-  // Vypex Change Start: Add access control to writing to the flash to avoid corruption.
-  halStorageUnlock();
-  // Vypex Change End
-
   halSta = convertMscStatusToNvm3Status(mscSta);
 
 #if CHECK_DATA
