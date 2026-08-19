@@ -1950,16 +1950,33 @@ Ecode_t UARTDRV_InitEuart(UARTDRV_Handle_t handle,
   // Enable clocks.
   CMU_ClockEnable(cmuClock_GPIO, true);
   CMU_ClockEnable(handle->uartClock, true);
-  if (initData->useLowFrequencyMode) {
-    CMU_ClockEnable(cmuClock_LFRCO, true);
+  // Vypex Change Start: the block below selects the clock for instance 0 alone — EUSART0CLK, or
+  // EUART0CLK on parts carrying a EUART — but ran for every instance, so initialising any other
+  // one reassigned instance 0's clock. An EUSART0 set up for low-frequency mode keeps a divider
+  // derived from 32.768 kHz, and stops receiving the moment it is pointed at the megahertz EM01
+  // group clock. The instance test mirrors the one this function already makes when assigning
+  // handle->uartClock.
+#if defined(EUSART0) || defined(EUART0)
+  if (false
+#if defined(EUART0)
+      || (initData->port == EUART0)
+#endif
+#if defined(EUSART0)
+      || (initData->port == EUSART0)
+#endif
+      )
+#endif
+  {
+    if (initData->useLowFrequencyMode) {
+      CMU_ClockEnable(cmuClock_LFRCO, true);
 #if defined(_SILICON_LABS_32B_SERIES_2_CONFIG_2) \
     || defined(_SILICON_LABS_32B_SERIES_2_CONFIG_7)
-    CMU_ClockEnable(cmuClock_EM23GRPACLK, true);
-    CMU_CLOCK_SELECT_SET(EM23GRPACLK, LFRCO);
+      CMU_ClockEnable(cmuClock_EM23GRPACLK, true);
+      CMU_CLOCK_SELECT_SET(EM23GRPACLK, LFRCO);
 #if defined(EUART_PRESENT)
-    CMU_CLOCK_SELECT_SET(EUART0, EM23GRPACLK);
+      CMU_CLOCK_SELECT_SET(EUART0, EM23GRPACLK);
 #elif defined (EUSART_PRESENT)
-    CMU_CLOCK_SELECT_SET(EUSART0CLK, EM23GRPACLK);
+      CMU_CLOCK_SELECT_SET(EUSART0CLK, EM23GRPACLK);
 #endif
 #elif defined(_SILICON_LABS_32B_SERIES_2_CONFIG_3)  \
     || defined(_SILICON_LABS_32B_SERIES_2_CONFIG_4) \
@@ -1967,18 +1984,18 @@ Ecode_t UARTDRV_InitEuart(UARTDRV_Handle_t handle,
     || defined(_SILICON_LABS_32B_SERIES_2_CONFIG_6) \
     || defined(_SILICON_LABS_32B_SERIES_2_CONFIG_8) \
     || defined(_SILICON_LABS_32B_SERIES_3)
-    CMU_CLOCK_SELECT_SET(EUSART0CLK, LFRCO);
+      CMU_CLOCK_SELECT_SET(EUSART0CLK, LFRCO);
 #else
   #error "Please assign a LF clock to EUSART instance"
 #endif
-  } else {
+    } else {
 #if defined(_SILICON_LABS_32B_SERIES_2_CONFIG_2) \
     || defined(_SILICON_LABS_32B_SERIES_2_CONFIG_7)
-    CMU_ClockEnable(cmuClock_EM01GRPACLK, true);
+      CMU_ClockEnable(cmuClock_EM01GRPACLK, true);
 #if defined(EUART_PRESENT)
-    CMU_CLOCK_SELECT_SET(EUART0CLK, EM01GRPACLK);
+      CMU_CLOCK_SELECT_SET(EUART0CLK, EM01GRPACLK);
 #elif defined (EUSART_PRESENT)
-    CMU_CLOCK_SELECT_SET(EUSART0CLK, EM01GRPACLK);
+      CMU_CLOCK_SELECT_SET(EUSART0CLK, EM01GRPACLK);
 #endif
 #elif defined(_SILICON_LABS_32B_SERIES_2_CONFIG_3)  \
     || defined(_SILICON_LABS_32B_SERIES_2_CONFIG_4) \
@@ -1986,11 +2003,13 @@ Ecode_t UARTDRV_InitEuart(UARTDRV_Handle_t handle,
     || defined(_SILICON_LABS_32B_SERIES_2_CONFIG_6) \
     || defined(_SILICON_LABS_32B_SERIES_2_CONFIG_8) \
     || defined(_SILICON_LABS_32B_SERIES_3)
-    CMU_CLOCK_SELECT_SET(EUSART0CLK, EM01GRPCCLK);
+      CMU_CLOCK_SELECT_SET(EUSART0CLK, EM01GRPCCLK);
 #else
   #error "Please assign a HF clock to EUSART instance"
 #endif
+    }
   }
+  // Vypex Change End
 
 #if defined(EUART_COUNT) && (EUART_COUNT > 0)
   GPIO->EUARTROUTE->ROUTEEN = GPIO_EUART_ROUTEEN_TXPEN;
